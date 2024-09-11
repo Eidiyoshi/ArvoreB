@@ -100,29 +100,40 @@ void mainArvore(arvoreBNo *raiz){
     }while(chave != -999);
 }
 
+void printarArvore(arvoreBNo *raiz){
+    FILE* arquivo = fopen(raiz->nome, "wb+");
+
+    fread(raiz, sizeof(arvoreBNo)*2*T-1, 1, arquivo);
+
+}
 
 
 void main(){
-
-    printf("Bem vindo ao trabalho de Estrutura de Dados 2\n");
-    printf("1- Criar nova arvore\n");
-    printf("2- Abrir arvore\n");
-    printf("0- Fechar programa\n");
-
     int escolha;
     FILE* arquivoDescritor = NULL;
 
+    printf("Bem vindo ao trabalho de Estrutura de Dados 2\n");
+
 
     do{
+        printf("1- Criar nova arvore\n");
+        printf("2- Abrir arvore\n");
+        printf("3- Printar arvore atual\n")
+        printf("0- Fechar programa\n");
+
         printf("Escolha: ");
         scanf("%d",&escolha);
+        arvoreBNo *raiz == NULL;
         switch(escolha){
             case 1:
                 arquivoDescritor = criarDescritor();
-                arvoreBNo *raiz = criarArvore();
+                raiz = criarArvore();
                 mainArvore(raiz);
                 break;
             case 2:
+                break;
+            case 3:
+                printarArvore(raiz);
                 break;
 
         }

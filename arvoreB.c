@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <time.h>
 
 // vou botar o T no primeiro caracter da raiz
 char nomeDoDescritor[50]; // variaveis globais pra facilitar minha vida
@@ -9,11 +10,18 @@ int T;                    // eu troco conforme eu mudo de arquivo
 
 
 typedef struct arvoreBNo {
+    int nome;
     int quantiaChaves;
     int *chaves;
     char **filhos;
     bool folha;
 } arvoreBNo;
+
+int random_number(){
+    srand(time(NULL));
+    int r = rand();
+    return r;
+}
 
 arvoreBNo* criarArvore(){
     arvoreBNo* no = (arvoreBNo*) malloc(sizeof(arvoreBNo));
@@ -23,7 +31,7 @@ arvoreBNo* criarArvore(){
     no->chaves = chaves;
     no->filhos = (char**) malloc((2*T) * sizeof(char*));
     no->folha = true;
-
+    no->nome = random_number();
 
     return no;
 }
@@ -53,9 +61,8 @@ FILE* criarArquivo(){
 }
 
 void escreverNumArquivo(arvoreBNo* raiz){
-    FILE *descritor = fopen(nomeDoDescritor,"wb+");
-    descritor++;
-    char nomeDaRaiz[50] = fread(&nomeDaRaiz, sizeof(char), 50, descritor);
+    FILE* arquivoNo = fopen(raiz->nome, "wb+");
+    fwrite(raiz, sizeof(arvoreBNo)*2*T-1, 1 , arquivoNo);
 }
 
 void inserirNaoCheioArvoreB( arvoreBNo *raiz, int chave){

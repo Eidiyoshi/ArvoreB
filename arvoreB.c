@@ -10,7 +10,7 @@ int T;                    // eu troco conforme eu mudo de arquivo
 
 
 typedef struct arvoreBNo {
-    int nome;
+    char nome[50];
     int quantiaChaves;
     int *chaves;
     char **filhos;
@@ -31,7 +31,9 @@ arvoreBNo* criarArvore(){
     no->chaves = chaves;
     no->filhos = (char**) malloc((2*T) * sizeof(char*));
     no->folha = true;
-    no->nome = random_number();
+    sprintf( no->nome, "%d", random_number());
+    FILE* arquivoRaiz = fopen(no->nome, "wb+");
+    fwrite(no, sizeof(arvoreBNo)*2*T-1, 1 , arquivoRaiz);
 
     return no;
 }
@@ -48,7 +50,7 @@ arvoreBNo* criarNo(bool folha) {
 }
 
 
-FILE* criarArquivo(){
+FILE* criarDescritor(){
     printf("Nome do Arquivo: ");
     scanf("%s",nomeDoDescritor);
     FILE* arquivo = fopen(nomeDoDescritor, "wb+");
@@ -83,7 +85,7 @@ void inserirArvoreB( arvoreBNo *raiz, int chave){
 
     }
     else{
-        inserirNaoCheioArvoreB(raiz, chave);
+        inserirNaoCheioArvoreB(raiz, &chave);
     }
 }
 
@@ -116,7 +118,7 @@ void main(){
         scanf("%d",&escolha);
         switch(escolha){
             case 1:
-                arquivoDescritor = criarArquivo();
+                arquivoDescritor = criarDescritor();
                 arvoreBNo *raiz = criarArvore();
                 mainArvore(raiz);
                 break;

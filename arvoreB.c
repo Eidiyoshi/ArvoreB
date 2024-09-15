@@ -11,7 +11,7 @@ int T;                    // eu troco conforme eu mudo de arquivo
 // e logo em seguida o nome da raiz
 
 typedef struct arvoreBNo {
-    char nome[50];
+    char nome[10];
     int quantiaChaves;
     int folha;
     int *chaves;
@@ -22,71 +22,71 @@ typedef struct arvoreBNo {
 
 int random_number(){
     srand(time(NULL));
-    int r = rand();
+    int r = rand() % 10000000 + 10000000;
     return r;
 }
 
 void escrita(arvoreBNo* no, char nomeNo[]){
-    FILE* arquivoNo = fopen(nomeNo, "wb+");
 
-    fwrite( &no->nome, 1 , sizeof(char[50]), arquivoNo );
+    char nomeFilhoProcessado[50];
+    sprintf( nomeFilhoProcessado, "%s", nomeNo);
+    FILE* arquivoNo = fopen(nomeFilhoProcessado, "wb+");
+
+    fwrite( no->nome,  sizeof(char[10]), 1 , arquivoNo );
     printf("escrito nome: %s\n", no->nome);
 
-    fseek(arquivoNo, sizeof(char[50]), SEEK_SET);
-    fwrite( &no->quantiaChaves, 1, sizeof(int), arquivoNo);
+    fclose(arquivoNo);
+    arquivoNo = fopen(nomeFilhoProcessado, "ab+");
+
+    fwrite( &no->quantiaChaves, sizeof(int), 1, arquivoNo);
     printf("escrito qntchv: %d\n", no->quantiaChaves);
 
-    fseek(arquivoNo, sizeof(char[50])+ sizeof(int), SEEK_SET);
     fwrite( &no->folha, sizeof(int), 1,  arquivoNo);
     printf("escrito folha: %d\n", no->folha);
 
-    fseek(arquivoNo, sizeof(char[50]) + sizeof(int) + sizeof(bool), SEEK_SET);
     fwrite( &no->chaves, sizeof(int), 2*T - 1,  arquivoNo);
-    for(int i =0; i < no->quantiaChaves; i++){
+    for(int i = 0; i < no->quantiaChaves; i++){
     printf("escrito num%d: %d\n",i,no->chaves[i]);
     }
 
-    fseek(arquivoNo, sizeof(char[50]) + sizeof(int) + sizeof(bool) + sizeof(int)*2*T, SEEK_SET);
-    fwrite( &no->filhos, sizeof(char[50]), 2*T,  arquivoNo);
+    fwrite( &no->filhos, sizeof(char[10]), 2*T,  arquivoNo);
 
 }
 
 arvoreBNo* leitura(char* nomeFilho){
-    
+
+    printf("nomepraler: %s\n",nomeFilho);
     char nomeFilhoProcessado[50];
     sprintf( nomeFilhoProcessado, "%s", nomeFilho);
-    
     FILE* arquivoFilho = fopen(nomeFilhoProcessado, "rb+");
     arvoreBNo* noFilho = (arvoreBNo*) malloc(sizeof(arvoreBNo));
 
     char nome[50];
-    fread(&nome, sizeof(char[50]), 1, arquivoFilho);
+    fseek(arquivoFilho, 0, SEEK_SET);
+    fread(&nome, sizeof(char[10]), 1, arquivoFilho);
     strcpy(noFilho->nome, nome);
     printf("lido nome: %s\n",nome);
 
     int qntChaves;
-    fseek(arquivoFilho, sizeof(char[50]), SEEK_SET);
+    fseek(arquivoFilho, sizeof(char[10]), SEEK_SET);
     fread(&qntChaves, sizeof(int),1, arquivoFilho); 
     noFilho->quantiaChaves = qntChaves;
     printf("lido qntch: %d\n",qntChaves);
 
     int folha;
-    fseek(arquivoFilho, sizeof(char[50]) + sizeof(int), SEEK_SET);
+    fseek(arquivoFilho, sizeof(char[10]) + sizeof(int), SEEK_SET);
     fread(&folha, sizeof(bool), 1,arquivoFilho);
     noFilho->folha = folha;
     printf("lido folha: %d\n",folha);
 
     int *chaves;
-    fseek(arquivoFilho, sizeof(char[50]) + sizeof(int) + sizeof(bool), SEEK_SET);
+    fseek(arquivoFilho, sizeof(char[10]) + sizeof(int) + sizeof(bool), SEEK_SET);
     fread(&chaves, sizeof(int), 2*T - 1, arquivoFilho);
     noFilho->chaves = chaves;
-    for(int i = 0; i < qntChaves; i++){
-        printf("lido chave%d: %d\n", i, chaves[i]);
-    }
 
     char **filhos;
-    fseek(arquivoFilho, sizeof(char[50]) + sizeof(int) + sizeof(bool) + sizeof(int)*2*T - sizeof(int), SEEK_SET);
-    fread(&filhos, sizeof(char[50]), 2*T, arquivoFilho);
+    fseek(arquivoFilho, sizeof(char[10]) + sizeof(int) + sizeof(bool) + sizeof(int)*2*T - sizeof(int), SEEK_SET);
+    fread(&filhos, sizeof(char[10]), 2*T, arquivoFilho);
     noFilho->filhos = filhos;
 
     return noFilho;
@@ -120,20 +120,22 @@ arvoreBNo* criarArvore(){
     no->chaves = (int*)malloc(2*T * sizeof(int) - 1);
     no->filhos = (char**) malloc((2*T) * sizeof(char*));
     no->folha = 1;
+ 
+ // colocando o nome da raiz no descritor e no nó
+    char nomeRaiz[50];
+    sprintf( nomeRaiz, "%d.bin", random_number());
+    strcpy(no->nome, nomeRaiz);
 
     int chave;
     printf("Digite um numero: ");
     scanf("%d",&chave);
 
+  
     inserirNaoCheioArvoreB(no, chave);
-    // colocando o nome da raiz no descritor
-    char nomeRaiz[50];
-    sprintf( nomeRaiz, "%d.bin", random_number());
-    strcpy(no->nome, nomeRaiz);
 
     FILE* descritor = fopen(nomeDoDescritor, "wb+");
     fseek(descritor, sizeof(int), SEEK_SET);
-    fwrite(nomeRaiz, sizeof(char[50]), 1, descritor);
+    fwrite(nomeRaiz, sizeof(char[10]), 1, descritor);
 
     // colocando o nó no arquivo da raiz
     FILE* arquivoRaiz = fopen(nomeRaiz, "wb+");
@@ -196,17 +198,16 @@ void printarArvore(){ // wip
 
     FILE* arquivoDescritor = fopen(nomeDoDescritor, "rb+");
     char *nomeRaiz;
-    arvoreBNo *raiz;
     fseek(arquivoDescritor, sizeof(int), SEEK_SET);
-    fread(&nomeRaiz, sizeof(char[50]), 1 , arquivoDescritor);
-    raiz = leitura( nomeRaiz );
+    fread(&nomeRaiz, sizeof(char[10]), 1 , arquivoDescritor);
+    arvoreBNo  = leitura( nomeRaiz );
     printf("nom%s\n", raiz->nome);
     printf("qnt%d\n", raiz->quantiaChaves);
     printf("fol%d\n",raiz->folha);
   //  for(int i = 0; i < raiz->quantiaChaves; i++){
 //        printf("%d",raiz->chaves[i]);
     //}
-    printf("end");
+    printf("end\n");
 }
 
 
@@ -263,7 +264,7 @@ void main(){
                 scanf("%s", nomeDoDescritor);
                 arquivoDescritor = fopen(nomeDoDescritor, "wb+");
                 fseek(arquivoDescritor, sizeof(int), SEEK_SET);
-                fread(&nomeRaiz, sizeof(char[50]), 1 , arquivoDescritor);
+                fread(&nomeRaiz, sizeof(char[10]), 1 , arquivoDescritor);
                 raiz = leitura(nomeRaiz);
 
                 mainArvore(raiz);
@@ -276,7 +277,7 @@ void main(){
 
             case 4:
                 fseek(arquivoDescritor, sizeof(int), SEEK_SET);
-                fread(&nomeRaiz, sizeof(char[50]), 1 , arquivoDescritor);
+                fread(&nomeRaiz, sizeof(char[10]), 1 , arquivoDescritor);
                 raiz = leitura(nomeRaiz);
                 
                 printf("Qual numero buscas?\n");
@@ -289,5 +290,3 @@ void main(){
         }
 
     }while(escolha != 0);
-
-}

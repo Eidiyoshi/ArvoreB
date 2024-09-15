@@ -30,16 +30,22 @@ void escrita(arvoreBNo* no, char nomeNo[]){
     FILE* arquivoNo = fopen(nomeNo, "wb+");
 
     fwrite( &no->nome, 1 , sizeof(char[50]), arquivoNo );
+    printf("escrito nome: %s\n", no->nome);
 
     fseek(arquivoNo, sizeof(char[50]), SEEK_SET);
     fwrite( &no->quantiaChaves, 1, sizeof(int), arquivoNo);
-    
+    printf("escrito qntchv: %d\n", no->quantiaChaves);
+
     fseek(arquivoNo, sizeof(char[50])+ sizeof(int), SEEK_SET);
     fwrite( &no->folha, sizeof(int), 1,  arquivoNo);
-    
+    printf("escrito folha: %d\n", no->folha);
+
     fseek(arquivoNo, sizeof(char[50]) + sizeof(int) + sizeof(bool), SEEK_SET);
     fwrite( &no->chaves, sizeof(int), 2*T - 1,  arquivoNo);
-    
+    for(int i =0; i < no->quantiaChaves; i++){
+    printf("escrito num%d: %d\n",i,no->chaves[i]);
+    }
+
     fseek(arquivoNo, sizeof(char[50]) + sizeof(int) + sizeof(bool) + sizeof(int)*2*T, SEEK_SET);
     fwrite( &no->filhos, sizeof(char[50]), 2*T,  arquivoNo);
 
@@ -50,27 +56,33 @@ arvoreBNo* leitura(char* nomeFilho){
     char nomeFilhoProcessado[50];
     sprintf( nomeFilhoProcessado, "%s", nomeFilho);
     
-    FILE* arquivoFilho = fopen(nomeFilhoProcessado, "wb+");
+    FILE* arquivoFilho = fopen(nomeFilhoProcessado, "rb+");
     arvoreBNo* noFilho = (arvoreBNo*) malloc(sizeof(arvoreBNo));
 
     char nome[50];
     fread(&nome, sizeof(char[50]), 1, arquivoFilho);
     strcpy(noFilho->nome, nome);
+    printf("lido nome: %s\n",nome);
 
     int qntChaves;
     fseek(arquivoFilho, sizeof(char[50]), SEEK_SET);
     fread(&qntChaves, sizeof(int),1, arquivoFilho); 
     noFilho->quantiaChaves = qntChaves;
+    printf("lido qntch: %d\n",qntChaves);
 
     int folha;
     fseek(arquivoFilho, sizeof(char[50]) + sizeof(int), SEEK_SET);
     fread(&folha, sizeof(bool), 1,arquivoFilho);
     noFilho->folha = folha;
+    printf("lido folha: %d\n",folha);
 
     int *chaves;
     fseek(arquivoFilho, sizeof(char[50]) + sizeof(int) + sizeof(bool), SEEK_SET);
     fread(&chaves, sizeof(int), 2*T - 1, arquivoFilho);
     noFilho->chaves = chaves;
+    for(int i = 0; i < qntChaves; i++){
+        printf("lido chave%d: %d\n", i, chaves[i]);
+    }
 
     char **filhos;
     fseek(arquivoFilho, sizeof(char[50]) + sizeof(int) + sizeof(bool) + sizeof(int)*2*T - sizeof(int), SEEK_SET);
@@ -80,6 +92,28 @@ arvoreBNo* leitura(char* nomeFilho){
     return noFilho;
 }
 
+
+
+
+void inserirNaoCheioArvoreB( arvoreBNo *raiz, int chave){
+    int contadorReverso = raiz->quantiaChaves;
+    if( raiz->folha ){
+        while( ( contadorReverso >= 1 ) && ( chave < (raiz->chaves[contadorReverso]) ) ){
+            raiz->chaves[contadorReverso+1] = raiz->chaves[contadorReverso];
+            contadorReverso--;
+        }
+        raiz->chaves[contadorReverso+1] = chave;
+        raiz->quantiaChaves = raiz->quantiaChaves+1;
+        escrita(raiz, raiz->nome);
+    }else{
+        while( contadorReverso >= 1 && chave < raiz->chaves[contadorReverso] ){
+            contadorReverso--;
+        }
+        contadorReverso++;
+        arvoreBNo* filhoI = leitura(raiz->filhos[contadorReverso]);
+    }
+}
+
 arvoreBNo* criarArvore(){
     arvoreBNo* no = (arvoreBNo*) malloc(sizeof(arvoreBNo));
     no->quantiaChaves = 0;
@@ -87,6 +121,11 @@ arvoreBNo* criarArvore(){
     no->filhos = (char**) malloc((2*T) * sizeof(char*));
     no->folha = 1;
 
+    int chave;
+    printf("Digite um numero: ");
+    scanf("%d",&chave);
+
+    inserirNaoCheioArvoreB(no, chave);
     // colocando o nome da raiz no descritor
     char nomeRaiz[50];
     sprintf( nomeRaiz, "%d.bin", random_number());
@@ -131,26 +170,6 @@ FILE* criarDescritor(){
 
 
 
-
-void inserirNaoCheioArvoreB( arvoreBNo *raiz, int chave){
-    int contadorReverso = raiz->quantiaChaves;
-    if( raiz->folha ){
-        while( ( contadorReverso >= 1 ) && ( chave < (raiz->chaves[contadorReverso]) ) ){
-            raiz->chaves[contadorReverso+1] = raiz->chaves[contadorReverso];
-            contadorReverso--;
-        }
-        raiz->chaves[contadorReverso+1] = chave;
-        raiz->quantiaChaves = raiz->quantiaChaves+1;
-        escrita(raiz, raiz->nome);
-    }else{
-        while( contadorReverso >= 1 && chave < raiz->chaves[contadorReverso] ){
-            contadorReverso--;
-        }
-        contadorReverso++;
-        arvoreBNo* filhoI = leitura(raiz->filhos[contadorReverso]);
-    }
-}
-
 void inserirArvoreB( arvoreBNo *raiz, int chave){
     if( raiz->quantiaChaves == 2*T - 1 ){
         printf("oi");
@@ -167,19 +186,26 @@ void mainArvore(arvoreBNo *raiz){
         printf(" -999 para sair\n");
         printf("Insira um numero: ");
         scanf("%d",&chave);
-        inserirArvoreB(raiz,chave);
-
+        if(chave != -999){        
+            inserirArvoreB(raiz,chave);
+        }
     }while(chave != -999);
 }
 
-void printarArvore(arvoreBNo *raiz){ //wip
-    FILE* arquivo = fopen(raiz->nome, "wb+");
+void printarArvore(){ // wip
 
-    fread(&raiz, sizeof(arvoreBNo), 1, arquivo);
-
-    for(int i = 0; i < raiz->quantiaChaves; i++){
-        printf("%d",raiz->chaves[i]);
-    }
+    FILE* arquivoDescritor = fopen(nomeDoDescritor, "rb+");
+    char *nomeRaiz;
+    arvoreBNo *raiz;
+    fseek(arquivoDescritor, sizeof(int), SEEK_SET);
+    fread(&nomeRaiz, sizeof(char[50]), 1 , arquivoDescritor);
+    raiz = leitura( nomeRaiz );
+    printf("nom%s\n", raiz->nome);
+    printf("qnt%d\n", raiz->quantiaChaves);
+    printf("fol%d\n",raiz->folha);
+  //  for(int i = 0; i < raiz->quantiaChaves; i++){
+//        printf("%d",raiz->chaves[i]);
+    //}
     printf("end");
 }
 
@@ -225,6 +251,7 @@ void main(){
         printf("Escolha: ");
         scanf("%d",&escolha);
         arvoreBNo *raiz = NULL;
+        char *nomeRaiz;
         switch(escolha){
             case 1:
                 arquivoDescritor = criarDescritor();
@@ -232,17 +259,26 @@ void main(){
                 mainArvore(raiz);
                 break;
             case 2:
-                break;
-        
-            case 3:
-                printarArvore(raiz);
-                break;
-
-            case 4:
-                char nomeRaiz[50];
+                printf("Nome do arquivo: ");
+                scanf("%s", nomeDoDescritor);
+                arquivoDescritor = fopen(nomeDoDescritor, "wb+");
                 fseek(arquivoDescritor, sizeof(int), SEEK_SET);
                 fread(&nomeRaiz, sizeof(char[50]), 1 , arquivoDescritor);
                 raiz = leitura(nomeRaiz);
+
+                mainArvore(raiz);
+                break;
+        
+            case 3:
+                
+                printarArvore();
+                break;
+
+            case 4:
+                fseek(arquivoDescritor, sizeof(int), SEEK_SET);
+                fread(&nomeRaiz, sizeof(char[50]), 1 , arquivoDescritor);
+                raiz = leitura(nomeRaiz);
+                
                 printf("Qual numero buscas?\n");
                 int chave;
                 scanf("%d",&chave);
